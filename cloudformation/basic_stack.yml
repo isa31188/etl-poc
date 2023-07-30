@@ -1,0 +1,20 @@
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Basic stack required for running the ETL POC
+
+Resources:
+
+  RawStageBucket:
+    Type: AWS::S3::Bucket    
+    Properties:
+      BucketName: etl-poc-data-raw
+      Tags:
+        - Key: stage
+          Value: raw
+
+
+Outputs:
+
+  RawStageBucketName:
+    Description: Name of bucket create for raw etl staging
+    Value: !Ref RawStageBucket

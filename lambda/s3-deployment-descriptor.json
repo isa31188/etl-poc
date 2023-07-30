@@ -1,0 +1,12 @@
+{
+    "download": {
+      "ArtifactBucketName": "cf-templates-kzw05u36ei3i-us-east-1",
+      "LambdaSourceS3Key": "src/download.zip",
+      "LambdaLayerS3Key": "src/download_lambda_layer.zip"
+    },
+    "decompress": {
+      "ArtifactBucketName": "cf-templates-kzw05u36ei3i-us-east-1",
+      "LambdaSourceS3Key": "src/decompress.zip",
+      "LambdaLayerS3Key": "src/decompress_lambda_layer.zip"
+    }
+  }

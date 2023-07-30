@@ -1,0 +1,10 @@
+[
+  {
+    "ParameterKey": "ArtifactBucketName",
+    "ParameterValue": "cf-templates-kzw05u36ei3i-us-east-1"
+  },
+  {
+    "ParameterKey": "SourceCodeS3Key",
+    "ParameterValue": "download.py"
+  }
+]

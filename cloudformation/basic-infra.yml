@@ -12,9 +12,17 @@ Resources:
         - Key: stage
           Value: raw
 
+  ArtifactsBucket:
+    Type: AWS::S3::Bucket    
+    Properties:
+      BucketName: etl-poc-artifacts
 
 Outputs:
 
   RawStageBucketName:
-    Description: Name of bucket create for raw etl staging
+    Description: Name of bucket created for raw etl staging
     Value: !Ref RawStageBucket
+
+  ArtifactsBucketName:
+    Description: Name of bucket created for artifacts
+    Value: !Ref ArtifactsBucket

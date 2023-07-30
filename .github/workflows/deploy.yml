@@ -1,6 +1,7 @@
 name: 'Deploy AWS Resources'
 
 on:
+  workflow_dispatch
   push:
     branches: [main]
 

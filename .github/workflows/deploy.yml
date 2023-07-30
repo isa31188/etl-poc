@@ -2,8 +2,6 @@ name: 'Deploy AWS Resources'
 
 # Avoid warning when running GitHub Actions workflow
 
-runs:
-  using: 'node16'
 
 on:
   workflow_dispatch

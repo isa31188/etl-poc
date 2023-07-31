@@ -1,6 +1,6 @@
 
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Stack for building the Glue Job for cleaning a raw data file.
+Description: Stack for building the Glue Job for repartitioning a parquet data file.
 
 Parameters:
 
@@ -13,16 +13,16 @@ Parameters:
   SourceCodeS3Key:
     Type: String
     MinLength: "1"
-    Default: "clean.py"
+    Default: "repartition.py"
     Description: "Name of the S3 key of the file with the source code."
 
 Resources:
 
-  GlueJobClean:
+  GlueJobRepartition:
     Type: AWS::Glue::Job
     Properties:
       Role: !GetAtt GlueJobRole.Arn
-      Name: gluejobclean
+      Name: gluejobrepartition
       Command:
         Name: glueetl
         PythonVersion: 3

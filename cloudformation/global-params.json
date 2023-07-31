@@ -1,0 +1,18 @@
+[
+    {
+      "ParameterKey": "ArtifactBucketName",
+      "ParameterValue": "etl-poc-artifacts"
+    },
+    {
+      "ParameterKey": "RawBucketName",
+      "ParameterValue": "etl-poc-data-raw"
+    },
+    {
+      "ParameterKey": "SilverBucketName",
+      "ParameterValue": "etl-poc-data-silver"
+    },
+    {
+      "ParameterKey": "GoldDataBucketName",
+      "ParameterValue": "etl-poc-data-gold"
+    }
+  ]

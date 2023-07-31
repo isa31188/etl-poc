@@ -163,3 +163,5 @@ cython_debug/
 # Project specific 
 **.ps1
 **package**
+**.csv
+**.zip

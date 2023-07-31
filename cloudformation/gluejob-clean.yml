@@ -1,0 +1,143 @@
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Stack for building the Glue Job for cleaning a raw data file.
+
+Parameters:
+
+  ArtifactBucketName:
+    Type: String
+    MinLength: "1"
+    Default: "cf-templates-kzw05u36ei3i-us-east-1"
+    Description: "Name of the S3 bucket containing the source code."
+
+  SourceCodeS3Key:
+    Type: String
+    MinLength: "1"
+    Default: "clean.py"
+    Description: "Name of the S3 key of the file with the source code."
+
+Resources:
+
+  GlueJobClean:
+    Type: AWS::Glue::Job
+    Properties:
+      Role: !GetAtt GlueJobRole.Arn
+      Name: gluejobclean
+      Command:
+        Name: glueetl
+        PythonVersion: 3
+        ScriptLocation: !Sub "s3://${ArtifactBucketName}/${SourceCodeS3Key}"
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxRetries: 0
+      GlueVersion: 3.0
+
+  GlueJobRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - glue.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+
+  S3Policy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyDocument: {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "glue:*",
+              "s3:GetBucketLocation",
+              "s3:ListBucket",
+              "s3:ListAllMyBuckets",
+              "s3:GetBucketAcl",
+              "ec2:DescribeVpcEndpoints",
+              "ec2:DescribeRouteTables",
+              "ec2:CreateNetworkInterface",
+              "ec2:DeleteNetworkInterface",
+              "ec2:DescribeNetworkInterfaces",
+              "ec2:DescribeSecurityGroups",
+              "ec2:DescribeSubnets",
+              "ec2:DescribeVpcAttribute",
+              "iam:ListRolePolicies",
+              "iam:GetRole",
+              "iam:GetRolePolicy",
+              "cloudwatch:PutMetricData"                
+            ],
+            "Resource": ["*"]
+          },
+          {
+            "Effect": "Allow",
+            "Action": [
+              "s3:CreateBucket",
+              "s3:PutBucketPublicAccessBlock"
+              ],
+            "Resource": ["arn:aws:s3:::aws-glue-*"]
+          },
+          {
+            "Effect": "Allow",
+            "Action": [
+              "s3:GetObject",
+              "s3:PutObject",
+              "s3:DeleteObject"
+            ],
+            "Resource": [
+              "arn:aws:s3:::aws-glue-*/*",
+              "arn:aws:s3:::*/*aws-glue-*/*"
+            ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetObject"
+          ],
+          "Resource": [
+            "arn:aws:s3:::crawler-public*",
+            "arn:aws:s3:::aws-glue-*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents",
+            "logs:AssociateKmsKey"                
+          ],
+          "Resource": [
+            "arn:aws:logs:*:*:log-group:/aws-glue/*"
+          ]
+          },
+          {
+          "Effect": "Allow",
+          "Action": [
+            "ec2:CreateTags",
+            "ec2:DeleteTags"
+          ],
+          "Condition": {
+            "ForAllValues:StringEquals": {
+              "aws:TagKeys": [
+                "aws-glue-service-resource"
+              ]
+            }
+          },
+          "Resource": [
+            "arn:aws:ec2:*:*:network-interface/*",
+            "arn:aws:ec2:*:*:security-group/*",
+            "arn:aws:ec2:*:*:instance/*"
+          ]
+          }
+        ]
+    }
+      PolicyName: "GlueJobPolicy"
+      Roles:
+        - !Ref GlueJobRole

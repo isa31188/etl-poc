@@ -1,7 +1,6 @@
 
 import requests, os, boto3, logging
 from botocore.exceptions import ClientError
-from zipfile import ZipFile
 
 file_name = '2m-Sales-Records.zip'
 
@@ -17,20 +16,20 @@ def download_data():
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0"
     }
 
-    with open(local_filepath, 'wb') as f:
+    with open(file_name, 'wb') as f:
         req = requests.get(url, headers=headers)  
         f.write(req.content)
         
     # Upload the file
     s3_client = boto3.client('s3')
     try:
-        response = s3_client.upload_file(file_name, bucket, object_name)
+        s3_client.upload_file(file_name, bucket, object_name)
     except ClientError as e:
         logging.error(e)
-        return False
-    return True
+        return -1
 
-    os.remove(local_filepath)
+    os.remove(file_name)
+    return 0
 
 if __name__ == "__main__":
     download_data()

@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Data Engineer Stack
+
+Parameters:
+
+  GlueWorkflowName:
+    Type: String
+    MinLength: "1"
+
+  WorkflowTriggerName:
+    Type: String
+    MinLength: "1"
+
+  ExtractJobTriggerName:
+    Type: String
+    MinLength: "1"
+
+  CleanJobTriggerName:
+    Type: String
+    MinLength: "1"
+
+  RepartitionJobTriggerName:
+    Type: String
+    MinLength: "1"
+
+  ExtractJobName:
+    Type: String
+    MinLength: "1"
+
+  CleanJobName:
+    Type: String
+    MinLength: "1"
+
+  RepartitionJobName:
+    Type: String
+    MinLength: "1"
+
+  RawCrawlerName:
+    Type: String
+    MinLength: "1"
+
+  SilverCrawlerName:
+    Type: String
+    MinLength: "1"
+
+  GoldCrawlerName:
+    Type: String
+    MinLength: "1"
+
+
+Resources:
+
+  GlueWorkflow:
+    Type: AWS::Glue::Workflow
+    Properties: 
+      Name: !Ref GlueWorkflowName
+      Description: Workflow for orchestrating the Glue jobs and crawlers
+
+  WorkflowTrigger:
+    Type: AWS::Glue::Trigger
+    Properties:
+      WorkflowName: !Ref GlueWorkflowName
+      Name: !Ref WorkflowTriggerName
+      Description: Trigger the ETL worflow
+      Type: ON_DEMAND
+      Actions:
+        - JobName: !Ref ExtractJobName
+    DependsOn: GlueWorkflow
+
+  ExtractJobTrigger:
+    Type: AWS::Glue::Trigger
+    Properties:
+      WorkflowName: !Ref GlueWorkflowName
+      Name: !Ref ExtractJobTriggerName
+      Description: Trigger on successful completion of extract job
+      Type: CONDITIONAL
+      StartOnCreation: True
+      Actions:
+        - JobName: !Ref CleanJobName
+        - CrawlerName: !Ref RawCrawlerName
+      Predicate:
+        Conditions:
+          - LogicalOperator: EQUALS
+            JobName: !Ref ExtractJobName
+            State: SUCCEEDED
+    DependsOn: GlueWorkflow
+
+  CleanJobTrigger:
+    Type: AWS::Glue::Trigger
+    Properties:
+      WorkflowName: !Ref GlueWorkflowName
+      Name: !Ref CleanJobTriggerName
+      Description: Trigger on successful completion of the data cleaning job
+      Type: CONDITIONAL
+      StartOnCreation: True
+      Actions:
+        - JobName: !Ref RepartitionJobName
+        - CrawlerName: !Ref SilverCrawlerName
+      Predicate:
+        Conditions:
+          - LogicalOperator: EQUALS
+            JobName: !Ref CleanJobName
+            State: SUCCEEDED
+    DependsOn: GlueWorkflow
+
+  RepartitionJobTrigger:
+    Type: AWS::Glue::Trigger
+    Properties:
+      WorkflowName: !Ref GlueWorkflowName
+      Name: !Ref RepartitionJobTriggerName
+      Description: Trigger on successful completion of the data repartition job
+      Type: CONDITIONAL
+      StartOnCreation: True
+      Actions:
+        - CrawlerName: !Ref GoldCrawlerName
+      Predicate:
+        Conditions:
+          - LogicalOperator: EQUALS
+            JobName: !Ref RepartitionJobName
+            State: SUCCEEDED
+    DependsOn: GlueWorkflow

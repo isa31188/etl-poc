@@ -1,0 +1,39 @@
+[
+    {
+      "ParameterKey": "ArtifactBucketName",
+      "ParameterValue": "etl-poc-artifacts"
+    },
+    {
+      "ParameterKey": "GoldBucketName",
+      "ParameterValue": "etl-poc-data-gold"
+    },
+    {
+      "ParameterKey": "ExtractSourceURL",
+      "ParameterValue": "https://eforexcel.com/wp/wp-content/uploads/2020/09/2m-Sales-Records.zip"
+    },
+    {
+      "ParameterKey": "RawBucketName",
+      "ParameterValue": "etl-poc-data-raw"
+
+    },
+    {
+      "ParameterKey": "RawObjectName",
+      "ParameterValue": "2m-Sales-Records.csv"
+    },
+    {
+      "ParameterKey": "SilverBucketName",
+      "ParameterValue": "etl-poc-data-silver"
+    },
+    {
+        "ParameterKey": "ExtractJobSourceCode",
+        "ParameterValue": "extract.py"
+    },
+    {
+        "ParameterKey": "CleanJobSourceCode",
+        "ParameterValue": "clean.py"
+    },
+    {
+        "ParameterKey": "RepartitionJobSourceCode",
+        "ParameterValue": "repartition.py"
+    }
+  ]

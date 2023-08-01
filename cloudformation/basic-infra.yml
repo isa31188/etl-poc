@@ -2,27 +2,77 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Basic stack required for running the ETL POC
 
-Resources:
+Parameters:
 
-  RawStageBucket:
-    Type: AWS::S3::Bucket    
-    Properties:
-      BucketName: etl-poc-data-raw
-      Tags:
-        - Key: stage
-          Value: raw
+  ArtifactBucketName:
+    Type: String
+    Description: "Name of S3 bucket that contains the source code for the ETL jobs."
+
+  AthenaQueryResultsBucketName:
+    Type: String
+    Description: "Name of S3 bucket used for storing the results of Athena queries."
+
+  AthenaWorkGroupName:
+    Type: String
+    Description: "Name of Athena work group which defines the results bucket."
+
+  RawBucketName:
+    Type: String
+    Description: "Name of S3 bucket that contains raw data file, directly from the source."
+
+  SilverBucketName:
+    Type: String
+    Description: "Name of S3 bucket that contains standardized data sources."
+
+  GoldBucketName:
+    Type: String
+    Description: "Name of S3 bucket that contains standardized and re-structured data, to be consumed by business and analytics."
+
+
+Resources:
 
   ArtifactsBucket:
     Type: AWS::S3::Bucket    
     Properties:
-      BucketName: etl-poc-artifacts
+      BucketName: !Ref ArtifactBucketName
 
-Outputs:
+  AthenaQueryResultsBucket:
+    Type: AWS::S3::Bucket    
+    Properties:
+      BucketName: !Ref AthenaQueryResultsBucketName
 
-  RawStageBucketName:
-    Description: Name of bucket created for raw etl staging
-    Value: !Ref RawStageBucket
+  RawStageBucket:
+    Type: AWS::S3::Bucket    
+    Properties:
+      BucketName: !Ref RawBucketName
+      Tags:
+        - Key: stage
+          Value: raw
 
-  ArtifactsBucketName:
-    Description: Name of bucket created for artifacts
-    Value: !Ref ArtifactsBucket
+  SilverStageBucket:
+    Type: AWS::S3::Bucket    
+    Properties:
+      BucketName: !Ref SilverBucketName
+      Tags:
+        - Key: stage
+          Value: silver
+
+  GoldStageBucket:
+    Type: AWS::S3::Bucket    
+    Properties:
+      BucketName: !Ref GoldBucketName
+      Tags:
+        - Key: stage
+          Value: gold
+
+  AthenaWorkGroup:
+    Type: AWS::Athena::WorkGroup
+    Properties: 
+      Description: Workgroup for athena usage concerning this project.
+      Name: !Ref AthenaWorkGroupName
+      State: ENABLED
+      WorkGroupConfiguration: 
+        ResultConfiguration:
+          OutputLocation: !Sub "s3://${AthenaQueryResultsBucketName}"
+    DependsOn: AthenaQueryResultsBucket
+    

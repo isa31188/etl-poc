@@ -4,15 +4,24 @@
       "ParameterValue": "etl-poc-artifacts"
     },
     {
+      "ParameterKey": "AthenaQueryResultsBucketName",
+      "ParameterValue": "etl-poc-athena-queries"
+    },
+    {
+      "ParameterKey": "AthenaWorkGroupName",
+      "ParameterValue": "etl-poc-athena-group"
+    },
+    {
       "ParameterKey": "RawBucketName",
       "ParameterValue": "etl-poc-data-raw"
+
     },
     {
       "ParameterKey": "SilverBucketName",
       "ParameterValue": "etl-poc-data-silver"
     },
     {
-      "ParameterKey": "GoldDataBucketName",
+      "ParameterKey": "GoldBucketName",
       "ParameterValue": "etl-poc-data-gold"
     }
   ]

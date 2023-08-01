@@ -1,0 +1,150 @@
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Glue resources for data governance
+
+Parameters:
+
+  DatabaseName:
+    Type: String
+    MinLength: "1"
+
+  RawBucketName:
+    Type: String
+    MinLength: "1"
+
+  SilverBucketName:
+    Type: String
+    MinLength: "1"
+
+  GoldBucketName:
+    Type: String
+    MinLength: "1"
+
+  RawDataCrawlerName:
+    Type: String
+    MinLength: "1"
+
+  SilverDataCrawlerName:
+    Type: String
+    MinLength: "1"
+
+  GoldDataCrawlerName:
+    Type: String
+    MinLength: "1"
+
+
+Resources:
+
+  ETLPOCDatabase:
+    Type: "AWS::Glue::Database"
+    Properties:
+      DatabaseInput:
+        Description: "Database for tables of the ETL POC"
+        Name: !Ref DatabaseName
+      CatalogId: !Ref AWS::AccountId
+
+  CrawlerRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - glue.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+
+  GlueCrawlerPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyDocument: {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": "glue:*",
+            "Resource": "*"
+          },
+          {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": "*"
+          },
+          {
+            "Effect": "Allow",
+            "Action": [
+              "logs:CreateLogStream",
+              "logs:PutLogEvents"
+            ],
+            "Resource": "*"
+          },
+          {
+            "Effect": "Allow",
+            "Action": "logs:CreateLogGroup",
+            "Resource": "*"
+          }
+        ]
+      }
+      PolicyName: "GlueCrawlerPolicy"
+      Roles:
+        - !Ref CrawlerRole
+
+  CrawlerRawData:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Name: !Ref RawDataCrawlerName
+      Role: !Ref CrawlerRole
+      DatabaseName: !Ref ETLPOCDatabase
+      RecrawlPolicy: 
+        RecrawlBehavior: CRAWL_EVERYTHING        
+      Targets:
+        S3Targets:
+          - Path: !Sub "s3://${RawBucketName}"
+      SchemaChangePolicy:
+        UpdateBehavior: UPDATE_IN_DATABASE
+        DeleteBehavior: LOG 
+      Configuration: "{\"Version\":1.0,\"Grouping\":{\"TableGroupingPolicy\":\"CombineCompatibleSchemas\"}}"    
+      Tags: {
+        DataCrawler: "CrawlerRawData"
+      }
+
+  CrawlerSilverData:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Name: !Ref SilverDataCrawlerName
+      Role: !Ref CrawlerRole
+      DatabaseName: !Ref ETLPOCDatabase
+      RecrawlPolicy: 
+        RecrawlBehavior: CRAWL_EVERYTHING        
+      Targets:
+        S3Targets:
+          - Path: !Sub "s3://${SilverBucketName}"
+      SchemaChangePolicy:
+        UpdateBehavior: UPDATE_IN_DATABASE
+        DeleteBehavior: LOG 
+      Configuration: "{\"Version\":1.0,\"Grouping\":{\"TableGroupingPolicy\":\"CombineCompatibleSchemas\"}}"    
+      Tags: {
+        DataCrawler: "CrawlerSilverData"
+      }
+
+  CrawlerGoldData:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Name: !Ref GoldDataCrawlerName
+      Role: !Ref CrawlerRole
+      DatabaseName: !Ref ETLPOCDatabase
+      RecrawlPolicy: 
+        RecrawlBehavior: CRAWL_EVERYTHING        
+      Targets:
+        S3Targets:
+          - Path: !Sub "s3://${GoldBucketName}"
+      SchemaChangePolicy:
+        UpdateBehavior: UPDATE_IN_DATABASE
+        DeleteBehavior: LOG 
+      Configuration: "{\"Version\":1.0,\"Grouping\":{\"TableGroupingPolicy\":\"CombineCompatibleSchemas\"}}"    
+      Tags: {
+        DataCrawler: "CrawlerGoldData"
+      }

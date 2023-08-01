@@ -1,0 +1,47 @@
+[
+    {
+      "ParameterKey": "GlueWorkflowName",
+      "ParameterValue": "etl_workflow"
+    },
+    {
+      "ParameterKey": "WorkflowTriggerName",
+      "ParameterValue": "etl_workflow_trigger"
+    },
+    {
+      "ParameterKey": "ExtractJobTriggerName",
+      "ParameterValue": "extract_job_trigger"
+    },
+    {
+      "ParameterKey": "CleanJobTriggerName",
+      "ParameterValue": "clean_job_trigger"
+    },
+    {
+      "ParameterKey": "RepartitionJobTriggerName",
+      "ParameterValue": "repartition_job_trigger"
+    },
+    {
+      "ParameterKey": "ExtractJobName",
+      "ParameterValue": "gluejobextract"
+
+    },
+    {
+      "ParameterKey": "CleanJobName",
+      "ParameterValue": "gluejobclean"
+    },
+    {
+      "ParameterKey": "RepartitionJobName",
+      "ParameterValue": "gluejobrepartition"
+    },
+    {
+        "ParameterKey": "RawCrawlerName",
+        "ParameterValue": "crawler_raw"
+    },
+    {
+        "ParameterKey": "SilverCrawlerName",
+        "ParameterValue": "crawler_silver"
+    },
+    {
+        "ParameterKey": "GoldCrawlerName",
+        "ParameterValue": "crawler_gold"
+    }
+  ]

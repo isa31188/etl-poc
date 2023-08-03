@@ -1,0 +1,31 @@
+[
+  {
+    "ParameterKey": "DatabaseName",
+    "ParameterValue": "etl_poc_database"
+  },
+  {
+    "ParameterKey": "GoldBucketName",
+    "ParameterValue": "etl-poc-data-gold"
+  },
+  {
+    "ParameterKey": "RawBucketName",
+    "ParameterValue": "etl-poc-data-raw"
+
+  },
+  {
+    "ParameterKey": "SilverBucketName",
+    "ParameterValue": "etl-poc-data-silver"
+  },
+  {
+    "ParameterKey": "RawDataCrawlerName",
+    "ParameterValue": "crawler_raw"
+  },
+  {
+    "ParameterKey": "SilverDataCrawlerName",
+    "ParameterValue": "crawler_silver"
+  },
+  {
+    "ParameterKey": "GoldDataCrawlerName",
+    "ParameterValue": "crawler_gold"
+  }
+]

@@ -1,0 +1,246 @@
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Stack for building the Glue Job for decompressing the data zip.
+
+Parameters:
+
+  ArtifactBucketName:
+    Type: String
+    MinLength: "1"
+
+  RawBucketName:
+    Type: String
+    MinLength: "1"
+
+  RawObjectName:
+    Type: String
+    MinLength: "1"
+
+  SilverBucketName:
+    Type: String
+    MinLength: "1"
+
+  GoldBucketName:
+    Type: String
+    MinLength: "1"
+
+  ExtractSourceURL:
+    Type: String
+    MinLength: "1"
+
+  ExtractJobSourceCode:
+    Type: String
+    MinLength: "4"
+    Description: "Name of the S3 key of the file with the source code for the data extraction job."
+
+  CleanJobSourceCode:
+    Type: String
+    MinLength: "4"
+    Description: "Name of the S3 key of the file with the source code for data cleaning."
+    
+  RepartitionJobSourceCode:
+    Type: String
+    MinLength: "4"
+    Description: "Name of the S3 key of the file with the source code for the data repartition."
+
+
+Resources:
+
+  GluePythonJobRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - glue.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+
+  GluePythonJobPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyDocument: {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "s3:GetObject",
+              "s3:PutObject",
+              "s3:DeleteObject"
+            ],
+            "Resource": [
+              !Sub "arn:aws:s3:::${ArtifactBucketName}/*",
+              !Sub "arn:aws:s3:::${RawBucketName}/*",
+              !Sub "arn:aws:s3:::${SilverBucketName}/*",
+              !Sub "arn:aws:s3:::${GoldBucketName}/*",
+            ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents"
+          ],
+          "Resource": "*"
+          }
+        ]
+    }
+      PolicyName: "GluePythonJobPolicy"
+      Roles:
+        - !Ref GluePythonJobRole
+
+
+
+  GlueSparkJobRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - glue.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+
+  GlueSparkJobPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyDocument: {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "glue:*",
+              "s3:GetBucketLocation",
+              "s3:ListBucket",
+              "s3:ListAllMyBuckets",
+              "s3:GetBucketAcl",
+              "ec2:DescribeVpcEndpoints",
+              "ec2:DescribeRouteTables",
+              "ec2:CreateNetworkInterface",
+              "ec2:DeleteNetworkInterface",
+              "ec2:DescribeNetworkInterfaces",
+              "ec2:DescribeSecurityGroups",
+              "ec2:DescribeSubnets",
+              "ec2:DescribeVpcAttribute",
+              "iam:ListRolePolicies",
+              "iam:GetRole",
+              "iam:GetRolePolicy",
+              "cloudwatch:PutMetricData"                
+            ],
+            "Resource": "*"
+          },
+          {
+            "Effect": "Allow",
+            "Action": [
+              "s3:GetObject",
+              "s3:PutObject",
+              "s3:DeleteObject"
+            ],
+            "Resource": [
+              !Sub "arn:aws:s3:::${ArtifactBucketName}/*",
+              !Sub "arn:aws:s3:::${RawBucketName}/*",
+              !Sub "arn:aws:s3:::${SilverBucketName}/*",
+              !Sub "arn:aws:s3:::${GoldBucketName}/*",
+            ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents",
+            "logs:AssociateKmsKey"                
+          ],
+          "Resource": "*"
+          },
+          {
+          "Effect": "Allow",
+          "Action": [
+            "ec2:CreateTags",
+            "ec2:DeleteTags"
+          ],
+          "Condition": {
+            "ForAllValues:StringEquals": {
+              "aws:TagKeys": [
+                "aws-glue-service-resource"
+              ]
+            }
+          },
+          "Resource": [
+            "arn:aws:ec2:*:*:network-interface/*",
+            "arn:aws:ec2:*:*:security-group/*",
+            "arn:aws:ec2:*:*:instance/*"
+          ]
+          }
+        ]
+    }
+      PolicyName: "GlueSparkJobRole"
+      Roles:
+        - !Ref GlueSparkJobRole
+
+  GlueJobExtract:
+    Type: AWS::Glue::Job
+    Properties:
+      Role: !GetAtt GluePythonJobRole.Arn
+      Name: gluejobextract
+      Command:
+        Name: pythonshell
+        PythonVersion: 3.9
+        ScriptLocation: !Sub "s3://${ArtifactBucketName}/${ExtractJobSourceCode}"
+      DefaultArguments: 
+        "--url": !Ref ExtractSourceURL
+        "--s3_destination_bucket": !Ref RawBucketName
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxRetries: 0
+      GlueVersion: 3.0
+      MaxCapacity: 0.0625
+
+  GlueJobClean:
+    Type: AWS::Glue::Job
+    Properties:
+      Role: !GetAtt GlueSparkJobRole.Arn
+      Name: gluejobclean
+      Command:
+        Name: glueetl
+        PythonVersion: 3
+        ScriptLocation: !Sub "s3://${ArtifactBucketName}/${CleanJobSourceCode}"
+      DefaultArguments: 
+        "--raw_object_name": !Ref RawObjectName
+        "--source_bucket": !Ref RawBucketName
+        "--target_bucket": !Ref SilverBucketName
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxRetries: 0
+      GlueVersion: 3.0
+      MaxCapacity: 2
+
+  GlueJobRepartition:
+    Type: AWS::Glue::Job
+    Properties:
+      Role: !GetAtt GlueSparkJobRole.Arn
+      Name: gluejobrepartition
+      Command:
+        Name: glueetl
+        PythonVersion: 3
+        ScriptLocation: !Sub "s3://${ArtifactBucketName}/${RepartitionJobSourceCode}"
+      DefaultArguments: 
+        "--raw_object_name": !Ref RawObjectName
+        "--source_bucket": !Ref SilverBucketName
+        "--target_bucket": !Ref GoldBucketName
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxRetries: 0
+      GlueVersion: 3.0
+      MaxCapacity: 2

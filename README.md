@@ -25,6 +25,7 @@ This repo contains a simple data ingestion use case comprised of an external dat
 * **S3**: for storing data and artifact code, 
 * **Glue**: for ETL pipelines (Python and Pyspark) and data catalog,
 * **Athena**: for querying data. 
+* **CloudWatch**: for logs.
 
 This solution was partially inspired by this repo: [aws-samples/aws-etl-orchestrator](https://github.com/aws-samples/aws-etl-orchestrator).
 

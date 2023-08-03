@@ -1,20 +1,18 @@
-# etl-poc
-
 Table of Contents
 =================
 
-	* [TL;DR ](#tldr")
-	* [Solution architecture](#solution-architecture")
-	* [Configuring the project](#configure-project")
-		* [Project requirements](#project-requirements")
-		* [Deploying the resources](#deploy-resources")
-		* [Running the ETL workflow](#run-workflow")
-		* [Checking schemas](#check-schemas")
-		* [Running queries on extracted data](#run-queries")
-		* [Deleting resources](#delete-resources")
-	* [Notes on architectural decisions](#architectural-decisions")
-	* [Possible improvements](#improvements")
-	* [Some notes on costs](#costs")
+* [TL;DR ](#tldr")
+* [Solution architecture](#solution-architecture")
+* [Configuring the project](#configure-project")
+    * [Project requirements](#project-requirements")
+    * [Deploying the resources](#deploy-resources")
+    * [Running the ETL workflow](#run-workflow")
+    * [Checking schemas](#check-schemas")
+    * [Running queries on extracted data](#run-queries")
+    * [Deleting resources](#delete-resources")
+* [Notes on architectural decisions](#architectural-decisions")
+* [Possible improvements](#improvements")
+* [Some notes on costs](#costs")
 
 
 <a name="tldr"></a>

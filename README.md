@@ -32,7 +32,7 @@ This solution was partially inspired by this repo: [aws-samples/aws-etl-orchestr
 <a name="solution-architecture"></a>
 # Solution architecture
 
-As described above, the solution contained in this repo uses the following AWS services: Cloudformation, IAM, S3, Glue and Athena. More precisely:
+A more detailed description of the resources used in this project, by AWS service:
 
 * **Cloudformation stacks** for managing AWS resources. For ease of development, these were grouped into:
     + `basic-infra` stack: basic resources required for deploying the projects, namely, buckets for artifacts and data and Athena work group for querying data storing results in S3.

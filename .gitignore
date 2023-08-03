@@ -167,3 +167,4 @@ cython_debug/
 **.zip
 *.ps1
 *test*.py
+__backup__/

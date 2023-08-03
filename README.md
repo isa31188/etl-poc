@@ -291,4 +291,4 @@ The costs are:
 * $1.00 per million requests above 1M in a month
 * free tier including 1st million objects and requests
 
-These costs are usually negligigle compared to jobs and crawlers.
+These costs are usually negligible compared to jobs and crawlers.

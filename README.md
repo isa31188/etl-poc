@@ -238,7 +238,7 @@ Possible improvements are:
 
 ## S3 buckets
 
-AWS S3 charges not only for the storage itself, but also for the actions on that storage (get's, create's, update's, delete's). Therefore, executing Glue Jobs, Glue Crawlers and Athena queries also generates costs in S3.
+AWS S3 charges not only for the storage itself, but also for the actions on that storage ("get", "create", "update", etc.). Therefore, executing Glue Jobs, Glue Crawlers and Athena queries also generates costs in S3.
 
 ## Athena
 

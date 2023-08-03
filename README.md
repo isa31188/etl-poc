@@ -21,7 +21,7 @@ Table of Contents
 This repo contains a simple data ingestion use case comprised of an external data source, ETL (extract-transform-load) pipeline, data catalog and querying platform. The solution was developed in AWS using the following services: 
 
 * **Cloudformation**, for the management of AWS resources, 
-* **IAM**, for access roles for computing instances, 
+* **IAM**, for access roles, 
 * **S3**: for storing data and artifact code, 
 * **Glue**: for ETL pipelines (Python and Pyspark) and data catalog,
 * **Athena**: for querying data. 
@@ -35,10 +35,10 @@ This solution was partially inspired by this repo: [aws-samples/aws-etl-orchestr
 A more detailed description of the resources used in this project, by AWS service:
 
 * **Cloudformation stacks** for managing AWS resources. For ease of development, these were grouped into:
-    + `basic-infra` stack: basic resources required for deploying the projects, namely, buckets for artifacts and data and Athena work group for querying data storing results in S3.
-    + `glue-jobs` stack: set of etl jobs for extracting, cleaning and repartitioning data.
-    + `glue-catalog` stack: Glue database and crawlers for automatic generation of table metadata.
-    + `glue-workflow` stack: orchestration between etl jobs and data crawlers.
+    + `basic-infra stack`: basic resources required for deploying the projects, namely, buckets for artifacts and data and Athena work group for querying data storing results in S3.
+    + `glue-jobs stack`: set of etl jobs for extracting, cleaning and repartitioning data.
+    + `glue-catalog stack`: Glue database and crawlers for automatic generation of table metadata.
+    + `glue-workflow stack`: orchestration between etl jobs and data crawlers.
 
 ![Cloudformation Stacks](images/cloudformation_stacks.png)
 
@@ -146,6 +146,42 @@ Once the workflow has completely run, you can check the generated metadata also 
 <a name="run-queries"></a>
 ## Running queries on extracted data
 
+Successful execution of the Glue Crawlers in the workflow automatically creates the metadata required to make the generated datasets available for querying in Athena. 
+
+Queries can be edited and executed directly in the `Amazon Athena > Query editor` page in the AWS console, as long as the correct `Workgroup` is selected (i.e. the work group created by the `basic-infra` stack in this project). 
+
+![Athena Query Editor](images/athena_querying.png)
+
+For example, querying the total profit per region, 
+```
+select region, cast(sum(total_profit)/1e9 as int) as profit_Billions
+from "etl_poc_data_gold"
+group by region
+order by profit_Billions desc
+```
+![Query Profit per Region](images/query_profit_perRegion.png)
+
+Or running a slightly more complex query for the top-3 countries per region in terms of profit:
+```
+select *
+from (
+    select *,
+    row_number() over (partition by region order by profit_Millions desc) as n
+    from
+    (
+      select region, 
+      country,
+      cast(sum(total_profit)/1e6 as int) as profit_Millions
+      from "etl_poc_data_gold"
+      group by region, country
+    )
+)
+where n <= 3
+order by region, profit_Millions desc
+```
+![Query Top3 Countries per Region](images/query_top3profit_perRegion.png)
+
+Athena also provides info on recent queries executed, run time, and data scanned, which can be useful for managing costs and adapting processes (e.g. setting data usage control limits in Athena).
 
 
 <a name="delete-resources"></a>
@@ -185,12 +221,13 @@ This project was developed with the goal of having a functional solution for an 
 
 Possible improvements are:
 
-* Automating project lifetime management with CI/CD processes
+* Automating the project lifetime management with CI/CD processes
 * Re-organizing cloudformation stacks
 * Considering Terraform in alternative to Cloudformation for infrastructure management 
 * Refining IAM role access policies
 * Adding data quality checks
-* Defining data access profiles (e.g. access only granted to gold stage)
+* Improve the ETL processing (e.g. country names)
+* Defining data access profiles (e.g. granting access to users only to data in the "gold" stage)
 * Setting data usage control limits in Athena
 * Setting up alarms for job execution failure
 
@@ -198,4 +235,59 @@ Possible improvements are:
 <a name="costs"></a>
 # Some notes on costs
 
-Add something to this section ... 
+## S3 buckets
+
+AWS S3 charges not only for the storage itself, but also for the actions on that storage (get's, create's, update's, delete's). Therefore, executing Glue Jobs, Glue Crawlers and Athena queries also generates costs in S3.
+
+## Athena
+
+AWS Athena charges either per query (the default) or per provisioned capacity. 
+
+* Per query, we are charged per MB scanned with a minimum of 10 MB per query. 
+* Per provisioned capacity, we are charged per compute capacity and time, with a minimum of 8 hours. 
+
+Given the above, the charging per provisioned capacity will make more sense if there is a daily, continuous use of Athena for querying data.
+
+In both cases, and just like for S3, using adequate data partitioning can greatly reduce costs.
+
+Running queries in Athena also generates costs in S3 and Glue.
+
+
+## Glue
+
+Among all services used in this project, and given how these have been used, Glue is by far the most expensive. 
+
+**Glue jobs** 
+
+Billed per DPU-Hour (DPU - data processing units). Both Python Shell jobs and Pyspark jobs are charged $0.44 per DPU-Hour with a minimum of 1 minute. 
+
+For Python Shell jobs, the minimum allocation is 0.0625 DPU, and this is also the default value.
+
+For Pyspark jobs, the minimum allocation is 2 DPU but the default is 10, so it's important to setup this value correctly.
+
+In this project, the 2 pyspark jobs (clean and repartition) usually run below 2 minutes using 2 DPU. This would make around $0.03 per execution ($0.06 for both).
+
+The extract job usually run below 30 seconds, but given that the minimum billing is 1 minute, each execution costs $0.0005 (because it only uses 0.0625 DPU). 
+
+If using Lambda functions instead, then costs would be charged by GB-second and number of requests (and returned payload, if applicable). For an x86 architecture, the price is $0.0000166667 for every GB-second and $0.20 per 1M requests. In this case, our dataset is only 238.0 MB (csv format, after unzipping), so the extract job would cost $0.0001 (considering 30 seconds of execution, assuming it would be the same as for the Glue job). This is 5x lower than the cost on the extract job in Glue, even though both costs are quite low. 
+
+Glue jobs were used in this project for their simplicity and given the assumptions considered. Nevertheless, in a real-world scenario, with a larger number and larger size of datasets and frequent workflow executio, it could make sense to consider implementing some or all of these steps in Lambda functions, at the expense of a larger codebase to maintain.
+
+**Glue Crawlers**
+
+Glue Crawlers have a billing similar to that of etl jobs: $0.44 per DPU-Hour. However, in this case, the minimum billed is 10 minutes per execution. Therefore, costs can build up quicker than for normal etl jobs.
+
+Glue Crawlers are not strictly required for having access to data in Athena. The metadata for tables can as well be added to the data catalog with explicit schema definition. 
+
+Otherwise, it can make sense to assume that the schema of data source will not change frequenty. Therefore, even if they are used, crawlers don't necessarily need to run with the same frequency as the ETL jobs. 
+
+**Glue Catalog**
+
+In Glue Catalog, billing is done in terms of objects (tables, table versions, partitions, partition indexes, or databases) and access requests.
+
+The costs are:
+* $1.00 per 100,000 objects stored above 1M, per month
+* $1.00 per million requests above 1M in a month
+* free tier including 1st million objects and requests
+
+These costs are usually negligigle compared to jobs and crawlers.
